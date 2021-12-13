@@ -1,0 +1,107 @@
+ # Code written by Ken W. Smith, 2021. (Dr. Smith may be contacted at kenwsmith54@gmail.com.)
+ # 2021 0608
+ #################################################################
+ # Ken W. Smith & Ryan L. Kaliszewski
+ # Created in April 2006 from large collection of older procedures
+ # Last modified June 2021.
+ #     To run this program, insert the following statements (without #)
+ # and change this to fit your file organization:
+ #  path := "gap4r8/KensGap/2021/DifSetProcedures/"; 
+ #  filename := Concatenation(path, "ConvolutionTable.txt");
+ # Read(filename);
+ #################################################################
+ 
+ #################################################################
+ # 1. ConvolutionTable_f( group, elements, func )                #
+ #################################################################
+ #
+ #   This procedure takes a group, a sorted list of the elements
+ # of the group and 'func', a function previously defined on
+ # the elements of the group.
+ #   It returns a table whose (i,j) entry is the
+ # positive integer k such that e[i] * f( e[j] ) = e[k].
+ #   This is especially useful for difference sets if 
+ # the function 'f' was defined by 
+ #                       f:= x-> x^-1;
+ # Example:
+ # > g:=SmallGroup(4,1); e:= Elements(g);
+ # > CL := ConvolutionTable_f(g, e, x->x);
+ # [ [ 1, 2, 3, 4 ], [ 2, 3, 4, 1 ], [ 3, 4, 1, 2 ], [ 4, 1, 2, 3 ] ]
+ #
+ # > CL_inv := ConvolutionTable_f(g, e, x->x^-1);
+ # [ [ 1, 4, 3, 2 ], [ 2, 1, 4, 3 ], [ 3, 2, 1, 4 ], [ 4, 3, 2, 1 ] ]
+ #################################################################
+ ConvolutionTable_f := function( group, elements, func )
+ local order, CL, i0, i1, i2;
+    order := Size( group );
+    CL    := [ ]; 
+    for i0 in [1..order] do CL[i0] := [ ]; od;
+    for i0 in [1..order] do
+       for i1 in [1..order] do 
+          for i2 in [1..order] do
+             if elements[i1]*func(elements[i2]) = elements[i0] then 
+                CL[i1][i2] := i0;  fi;
+          od; 
+       od;
+    od;
+    return CL;
+ end;
+ #################################################################
+ # Example:
+ # > g:=SmallGroup(4,1); e:= Elements(g); CL := ConvolutionTable_f(g, e, x->x);
+ # [ [ 1, 2, 3, 4 ], [ 2, 3, 4, 1 ], [ 3, 4, 1, 2 ], [ 4, 1, 2, 3 ] ]
+ #
+ # > CL_inv := ConvolutionTable_f(g, e, x->x^-1);
+ # [ [ 1, 4, 3, 2 ], [ 2, 1, 4, 3 ], [ 3, 2, 1, 4 ], [ 4, 3, 2, 1 ] ]
+
+ #################################################################
+ # 2. Convolution( MT, list1, list2 )                        #
+ #################################################################
+ #
+ #   This procedure takes table MT (created, say, by 
+ # ConvolutionTable_f( g, e, f ) and two lists, list1 and list2,
+ # (Members of the integer group ring Zg here are represented as
+ # a list of coefficients, so for example, the set e[1]+2*e[3]
+ # in Z(C_5) will appear as [1,0,2,0,0].) 
+ #   It then uses the convolution list MT to quickly compute 
+ # list1*list2 in Zg and returns that answer as a list.
+ #################################################################
+ Convolution := function( MT, list1, list2 )
+ local sizeMT, conprod, i1, i2, i3;
+    sizeMT  := Size( MT );
+    conprod := ListWithIdenticalEntries( sizeMT, 0 ); # This will be
+                                                      # the final answer.
+     for i1 in [1..sizeMT] do for i2 in [1..sizeMT] do
+       i3 := MT[i1][i2];
+       conprod[i3] := conprod[i3]+list1[i1]*list2[i2];
+     od; od;
+
+    return conprod;
+ end;
+ #################################################################
+ # > g:=SmallGroup(4,1); e:= Elements(g); 
+ # > CL := ConvolutionTable_f(g, e, x->x);
+ # [ [ 1, 2, 3, 4 ], [ 2, 3, 4, 1 ], [ 3, 4, 1, 2 ], [ 4, 1, 2, 3 ] ]
+
+ #################################################################
+ # 3. LeftTransversalList( group, elements, subgroup )           #
+ #################################################################
+ #   This procedure takes a group, a sorted list of elements
+ # of the group, a subgroup, and returns a list of left cosets of
+ # the  subgroup in the group.  The elements of the cosets 
+ # are positive integers; if the integer i0 is listed then e[i0] 
+ # is in that coset. 
+ #################################################################
+ LeftTransversalList := function( group, elements, subgroup )
+ local rt, lt_list, t;
+   rt := RightTransversal( group, subgroup);
+   lt_list := [ ];
+   for t in rt do Add(lt_list, Position(elements,t^-1)); od;
+   return lt_list;
+ end;
+ #################################################################
+ # Example:
+ # > g:=SmallGroup(8,3); e:= Elements(g); h:=Group(e[2]);
+ # lt := LeftTransversalList(g,e,h);
+ #[ 1, 3, 4, 7 ]
+ 

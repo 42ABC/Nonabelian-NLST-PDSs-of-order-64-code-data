@@ -1,0 +1,156 @@
+ # Code written by Ken W. Smith, 2021. (Dr. Smith may be contacted at kenwsmith54@gmail.com.)
+ #################################################################
+ # Ken W. Smith & Ryan L. Kaliszewski
+ # Created in April 2006 from large collection of older procedures
+ # Last modified 2021 0614
+ #     To run this program, insert the following statements (without #)
+ # and change this to fit your file organization:
+ #################################################################
+ # Change the line below to match your computer!
+ # v v v                                   v v v
+ #################################################################
+ #  path := "gap4r8/KensGap/2021/DifSetProcedures/"; 
+#  filename11 := Concatenation(path, "11IncidenceMatrices.txt");
+ # Read(filename11);
+ #################################################################
+ # This file has 3 procedures used to create incidence matrices from
+ # the output of Dylan Peifer's DifSet package.
+
+ #################################################################
+ # 11. PointsToInterval( design )                                    #
+ #################################################################
+ #   This procedure takes a design (a set of sets) and creates
+ # an isomorphic design on the point set [1..v].
+ # i, j, and s are iterates.
+ #################################################################
+ PointsToInterval := function( design )
+ local blocks, v, k, points, intDesign, i, j, s;
+    blocks := Size( design );
+    points := Set( Union( design ) );
+    v      := Size( points );
+
+    intDesign := [ ];
+    for i in [1..blocks] do 
+       Add(intDesign, ShallowCopy( design[i] ) ); 
+    od;
+
+    for i in [1..blocks] do 
+       k := Size( design[i] );
+       for j in [1..k] do
+          for s in [1..v] do 
+             if design[i][j] = points[s] then 
+                intDesign[i][j] := s;  fi;
+          od;
+       od;
+    od;
+    return intDesign;
+ end;
+ #################################################################
+
+ #################################################################
+ # 12. LeftTranslates_Nums( group, sublist )                              #
+ #################################################################
+ #	This procedure reads in a group and a subset 'sublist' 
+ # of integers representing members of the group and creates the 
+ # collection of all images of 'sublist' under the action LEFT multiplication.
+ #      I've added a line that allows one to work from the numbers [1..v];
+ #################################################################
+ LeftTranslates_Nums := function( group, sublist )
+ local k, elements, g, design, i, block;
+    k        := Size( sublist );
+    elements := Elements( group );
+    design   := [ ];
+
+    for g in elements do
+       block := [ ];
+
+       for i in [ 1..k ] do
+          Add( block,  g*elements[sublist[i]] );
+       od;
+
+       Add( design, block );
+    od;
+
+    return design;
+ end;
+ #################################################################
+
+ #################################################################
+ # 13. IncidenceMatrix( design )                                 #
+ #################################################################
+ #   This procedure takes a design (a set of sets) on [1..v] 
+ # and creates an incidence matrix.  This function works on 
+ # designs that incorporate integers or other symbols.
+ #################################################################
+ IncidenceMatrix := function( design )
+ local blocks, v, k, incMat, intDesign, i, j;
+    intDesign := PointsToInterval(design);
+    blocks    := Size( intDesign );
+    v         := Size( Set( Flat( intDesign ) ) );
+    k         := Size( intDesign[1] );
+
+    incMat := NullMat(blocks,v);
+    for i in [1..blocks] do 
+       for j in [1..k] do
+          incMat[i][intDesign[i][j]]:=1;
+       od; 
+    od;
+    return incMat;
+ end;
+ #################################################################
+
+# Example:
+# > g:=SmallGroup(16,2);
+# > ds := [ 1, 2, 3, 4, 8, 15 ];
+# > design := LeftTranslates_Nums( g, ds );
+# > mat := IncidenceMatrix( design ); # mat is the incidence matrix
+# > snf:=Collected(DiagonalOfMat(SmithNormalFormIntegerMat(mat)));
+# The 2-rank, the dimension of the row space of 'mat' over GF(2) is
+# > snf[1][2];
+
+
+#     design1 := LeftTranslates_Nums( g1, ds );
+#     pti1 := PointsToInterval( design1 ); # This is an unsorted list of the blocks.
+#     blocklist1 := [ ];
+#     for list in pti1 do Sort(list); Add(blocklist1, list); od; # We sort the blocks.
+#     SBIBD1 := BlockDesign( 64, blocklist1 );
+
+ #################################################################
+ # 14. CodeRank( mat, p )                                    #
+ #################################################################
+ #   This procedure takes a matrix 'mat' and finds its rank 
+ # in characteristic 'p'.  
+ #################################################################
+ CodeRank := function( mat, p )
+ local rank, x, snf, r;
+   rank := 0;
+   snf:=Collected(DiagonalOfMat(SmithNormalFormIntegerMat(mat)));
+   for x in snf do 
+     r := x[1] mod p;
+     if not (r=0) then rank := rank + x[2]; fi;
+   od;
+   return rank;
+ end;
+ #################################################################
+
+ #################################################################
+ # 15. IncidenceMatToDesign( mat )                                    #
+ #################################################################
+ #   This procedure takes a (0,1)-matrix 'mat' and builds a design
+ # (a set of subsets of [1..v]) corresponding to the matrix.
+ #################################################################
+ IncidenceMatToDesign := function( mat )
+ local v, blocklist, row, col, list;
+   v := Size(mat); 
+   blocklist := [ ];
+   for row in [1..v] do
+     list := [ ]; 
+     for col in [1..v] do 
+       if mat[row][col] = 1 then Add(list, col); fi;
+     od; 
+     Sort(list);
+     Add(blocklist, list);
+   od;
+   return blocklist;
+ end;
+ #################################################################
