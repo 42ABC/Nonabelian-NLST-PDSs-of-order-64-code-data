@@ -35,7 +35,7 @@ isdsetish := function(g,dset,checkpos)
     end;
 
 
-revable := [];
+dsetable := [];
 Read("PDS18Ineq_table.txt"); #CHANGEPATH
 for i in [1..Size(ineq_PDS_table)] do
     rev_i := [];
@@ -103,7 +103,7 @@ for i in [1..Size(ineq_PDS_table)] do
                         int3 := Size(Intersection(dset3, inv_dset3));
         
                         if int1=6 and int2=6 and int3=6 then #note that the 6 is specialized for order 16
-                            Print("3rev: ", ineq_PDS_table[i][1], " ",ineq_PDS_table[i][2][j],"\n");
+                            Print("3dset: ", ineq_PDS_table[i][1], " ",ineq_PDS_table[i][2][j],"\n");
                             Add(rev_i,ineq_PDS_table[i][2][j]);
                             #Print(dset1,"\n");
                             #Print(dset2,"\n");
@@ -119,13 +119,13 @@ for i in [1..Size(ineq_PDS_table)] do
         od;
     od;
 
-    Add(revable,[ineq_PDS_table[i][1],rev_i]);
+    Add(dsetable,[ineq_PDS_table[i][1],rev_i]);
 
 od;
 
-Print("printing revable:\n");
-for i in [1..Size(revable)] do
-    Print(revable[i],"\n");
+Print("printing dsetable:\n");
+for i in [1..Size(dsetable)] do
+    Print(dsetable[i],"\n");
 od;
 
-PrintTo("PDS18_revablePDSs.txt","revable := ", revable, ";\n"); #CHANGEPATH
+PrintTo("PDS18_dsetablePDSs.txt","dsetable := ", dsetable, ";\n"); #CHANGEPATH
